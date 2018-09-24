@@ -106,3 +106,19 @@ var pathObj = path.parse(__filename);
 console.log(pathObj);
 ```
 ### OS Module 
+How to get Information about the current operating system.
+
+*Getting The Ram eg*
+```
+const OS = require('os');
+
+var memory = OS.totalmem();
+var freeMemory = OS.freemem();
+
+//Template string
+
+console.log(`Total Memory ${memory}`);
+console.log(`Free Memory ${freeMemory}`);
+
+
+```
