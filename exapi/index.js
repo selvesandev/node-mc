@@ -3,8 +3,15 @@ const Joi = require('joi');
 const app = express();
 const bodyParser = require("body-parser");
 
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({extended: false}));
+// app.use(bodyParser.json());
+
+app.use(express.json());
+app.use(express.urlencoded({extended: true})); //with extended true you can pass complex data like arrays from the request
+
+app.use(function (req, res, next) {
+    next();
+});
 
 
 app.post('/api/courses', (req, res) => {

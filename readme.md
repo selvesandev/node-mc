@@ -100,12 +100,12 @@ The arguments `require`,`exports` etc are passed inside every module automatical
  `Path`
  
  
- #### Path Module
+#### Path Module
 ```
 var pathObj = path.parse(__filename);
 console.log(pathObj);
 ```
-### OS Module 
+#### OS Module 
 How to get Information about the current operating system.
 
 *Getting The Ram eg*
@@ -122,3 +122,282 @@ console.log(`Free Memory ${freeMemory}`);
 
 
 ```
+
+#### File Module
+How to work with file.
+```
+const fs = require('fs');
+const files = fs.readdirSync('./');//list of all the files in current directry.
+console.log(files);
+
+
+//Synchronous
+fs.readdir('./', function (err, files) {
+    console.log(files);
+    //only one of the value will have value if there is a error the files will be null is there is not the err will be null
+});
+```
+
+#### Event Module.
+A lot of node core functionality is based on the concept of events. 
+
+A Event is basically a signal which indicates that something has happened in our application   
+eg:- 
+
+The `HTTP` class where we listen to a given port and every time we receive request on that port that http class raises and `Event`.
+Our job here is listening to that event a turning it into right response.
+
+**Raising an Event**
+```
+const EventEmitter = require('events');//we get the event emitter class.
+const emitter = new EventEmitter();
+
+//
+emitter.emit('messageLogged');
+```
+
+**Listening to an Event**
+```
+emitter.on('messageLogged', function () {
+    //on can be replace by addListener
+    console.log('listener called');
+});
+```
+
+**Note** The event listener should always be registered before the event is fired.
+
+**Event Argument**
+```
+emitter.on('messageLogged', function (argument) {
+    //on can be replace by addListener
+    console.log('listener called', argument);
+});
+
+//
+emitter.emit('messageLogged', {name: 'Ram', id: 2});
+```
+
+**Extending EventEmitter**
+```
+
+class logger extends EventEmitter {
+    log() {
+        this.emit('messageLogged', {name: 'ram', id: 2});
+    }
+    //always use the emitter like this
+}
+
+logger.on('messageLogged',function(){
+//do something
+});
+
+const logger=new Logger();
+logger.log();
+```
+
+#### Http Module
+To create the web server that listen for a http request for a given port with this we can make a backend server.
+The server variable is a event emitter inherited from `net.Server` which is a `EventEmitter`, Therefore it has on, emit, addListener etc methods.
+
+
+```
+var server = http.createServer();
+server.listen(3000);
+```
+
+When we run this application this server will listen on port `3000`. Everytime there is a new connection
+this server will raise and event named `connection`
+
+```
+server.on('connection', function () {
+    console.log('request received');
+});//the server emits the connection emitter
+
+```
+**Note** of course you will have to register this before listening to port 3000.
+
+
+**We can also**
+```
+//use this instead.
+var server = http.createServer(function (req, res) {
+    if (req.url === '/') {
+        res.write('Hello world');
+        res.end();
+    }
+    if(req.url === '/api'){
+        res.write(JSON.strigify([1,2,4]));
+        res.end();
+    }
+});
+server.listen(3000);
+console.log('listening on port 3000');
+```
+
+
+## REST API
+> Representational State Transfer.
+```
+http://vidly.com/api/customers
+
+HTTP REQUEST VERB
+-----------------------
+GET > Getting Data
+POST > Creating Data
+PUT > Updating Data
+DELETE > Deleting Data
+
+```
+
+
+### Express
+A most popular framework to give our application a structure.
+```
+http://expressjs.com/en/4x/api.html#app
+```
+
+**Your first Express Server**
+```
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Hello world');
+});
+
+app.listen(4000, () => {
+    console.log('listening on port 4000');
+});
+```
+
+### Nodemon (Node Monitor)
+As far you have seen every time we make changes to the code we have to
+quiz and restart the server which is a hidious process.  
+So we are going to install a node package called nodemon.
+```
+sudo npm i -g nodemon
+```
+Now instead of running your application with node we will run it with `nodemon`
+```
+nodemon app.js
+```
+
+### Environment Variables.
+A variable that is part of the node environment in which the process runs.
+It's value is set outside this application.   
+Setting up the port with environment variable.
+
+```
+
+//PORT
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+    console.log(`listening on port 4000 ${port}`);
+});
+```
+
+**Here** if the environment variable port is set then use that else use `4000`
+
+**Setting up ENVIRONMENT VARIABLE**  
+In mac you can set the Environment variable with `export` command on windows use `set`
+```
+export PORT=5000
+```
+Now as we have environment variable the app will run on port 5000
+```
+nodemon index.js
+```
+
+#### Handling POST AND GET
+In order to parse the POST data from the request you need to parse the body into json.
+```
+
+app.use(express.json());
+app.use(express.urlencoded({extended: true})); 
+//with extended true you can pass complex data like arrays from the request
+
+```
+
+#### Validate Input with JOI.
+```
+npm install joi
+```
+```
+const Joi=require('joi'); // since joi return a class we store it in a constant with Uppercase since we should use pascal case for classes.
+
+app.post('/api/courses', (req, res) => {
+    const schema = {
+        name: Joi.string().min(3).required()
+    };
+    const result = Joi.validate(req.body, schema);
+    if (result.error) {
+        res.status(400).send(result.error);
+    }
+    res.send(req.body);
+});
+
+```
+
+
+### Express Middleware.
+Is a function that resides in a request and response pipelines.
+
+```
+app.use(function (req, res, next) {
+    next();
+});
+```
+
+OR
+
+```
+function log(req,res,next){
+    
+}
+
+module.exports=log;
+const log=require('.log');
+app.use(log);
+```
+
+
+##### Build In Middleware.
+`app.use(express.urlencoded())` This parse the incoming request with url encoded payload.
+
+`app.use(express.static('public'));` To handle all our static assets. Here our images,css and so are put on the `public` folder.  
+So that we can access it from the url `localhost:3000/file.name` from the root of the url no public.
+
+##### Third Party Middleware.
+`expressjs.com/en/resources/middleware.html`
+
+```
+const morgan=require('morgan');
+app.use(morgan('tiny'));
+
+//with morgan everytime we sent a request to the server it will be logged in the termal you can also configure morgain to log in certain file.
+```
+
+
+### Mongo DB
+A document or No SQL Database We don't have the concept of tables, schemas, views, records, columns here.
+Unlike relational databases where you have to design your databases ahead of time in mongo db there is no such thing
+called schema or design you simply store a json object in mongo db.
+
+#### Installation On Mac.
+```
+brew install mongodb
+```
+Once the mongodb has been installed create `/data/db` as mongo db stores the data in this path.
+```
+sudo mkdir -p /data/db
+```
+Now you have to give the right permission to this data directory.
+```
+sudo chown -R `id -un` /data/db
+```
+Now run the mongo damon `service that runs on the background and listens on a connection on a given port`
+```
+mongod
+```
+Also download the mongodb client `(mongodb compass)`.
+
