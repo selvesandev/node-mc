@@ -41,3 +41,19 @@ async function getCourse() {
 
 
 getCourse();
+
+async function updateCourse(id) {
+    const course = await Course.findById(id);
+    if (!course) return;
+
+    course.set({
+        isPublished: true,
+        author: 'James bond'
+    });
+}
+
+
+async function removeCourse(id) {
+    const course = await Course.deleteOne({_id: id});
+    console.log(course);
+}

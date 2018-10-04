@@ -378,12 +378,12 @@ app.use(morgan('tiny'));
 ```
 
 
-### Mongo DB
+## Mongo DB
 A document or No SQL Database We don't have the concept of tables, schemas, views, records, columns here.
 Unlike relational databases where you have to design your databases ahead of time in mongo db there is no such thing
 called schema or design you simply store a json object in mongo db.
 
-#### Installation On Mac.
+### Installation On Mac.
 ```
 brew install mongodb
 ```
@@ -401,7 +401,7 @@ mongod
 ```
 Also download the mongodb client `(mongodb compass)`.
 
-#### Connect with Mongo DB
+### Connect with Mongo DB
 ```
 npm i mongoose
 
@@ -430,7 +430,7 @@ mongoose.connect('mongodb://localhost', {useNewUrlParser: true}).then(() => {
 });
 ```
 
-##### Schema
+### Schema
 We use schema to define the shape of document or collection in mongodb. A collection in 
 mongodb is like a table in relational database. A document in mongodb is kind of similay to row in RDBMS.
 
@@ -450,7 +450,7 @@ const courseSchema = new mongoose.Schema({
 });
 ```
 
-##### Models.
+### Models.
 We need to compile the schema into a mongodb model.
 ```
 const Course = mongoose.model('Course', courseSchema); //returns a class
@@ -462,7 +462,7 @@ const courseObj = new Course({
 });
 ```
 
-##### Saving to Database
+#### Saving to Database
 ```
 courseObj.save();
 ```
@@ -486,7 +486,7 @@ async function createCourse(){
 refactoring the model and the save function into the `async function`.
 
 
-##### Retrieving Data.
+#### Retrieving Data.
 ```
 
 async function getCourse() {
@@ -582,4 +582,90 @@ await Course.find({
     .limit(pageSize)
     .select()
 ```
+#### Updating Data
+Method 1
+```
 
+async function updateCourse(id) {
+    const course = await Course.findById(id);
+    if (!course) return;
+
+    course.isPublished = true;
+    course.author = 'James Bond';
+    const result = await course.save();
+    console.log(result);
+}
+
+```
+Method 2
+```
+    const course = await Course.findById(id);
+        if (!course) return;
+    
+        course.set({
+            isPublished: true,
+            author: 'James bond'
+        });
+        const result = await course.save();
+        console.log(result);
+```
+
+Method 3 _updating directly without querying the data_
+```
+const course = await Course.update({_id:id},{
+    $set:{
+        author:'Jack sparrow',
+        isPublished:false
+    }    
+});
+console.log(course);//updated data.
+```
+**NOTE** Mongo DB update Operators `$currentDate`,
+`$inc(increment the number of likes on the fly)`,
+`$min`,`$max`,
+`$mul`,
+`$rename`,
+`$set`,
+`$setOnInsert`,
+`$unset`
+
+
+Method 3 _If you want to get the document that was updated_
+```
+const course = await Course.findByIdAndUpdate(id,{
+    $set:{
+        author:'Jack sparrow',
+        isPublished:false
+    }    
+},{new:false});//new is false by default optional argument.
+console.log(course);
+//course object that was before the update.  if new is true then this is the new data.
+```
+
+
+#### Remove Data
+Method 1 _Delete Only One_
+
+```
+async function removeCourse(id) {
+    const course = await Course.deleteOne({_id: id});
+    console.log(course);
+}
+```
+Method 2 _Delete Only Many_
+  
+```
+async function removeCourse(id) {
+   const course = await Course.deleteMany({isPublished: true});
+   console.log(course);
+}
+```
+
+Method 3 _Delete And get the deleted Data_
+  
+```
+async function removeCourse(id) {
+   const course = await Course.findByIdAndRemove(id);
+   console.log(course);
+}
+```
