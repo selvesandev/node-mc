@@ -401,3 +401,185 @@ mongod
 ```
 Also download the mongodb client `(mongodb compass)`.
 
+#### Connect with Mongo DB
+```
+npm i mongoose
+
+```
+
+Now connect with the mongoose library.
+```
+const mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/playground'); //playground is the name of the database. 
+
+```
+This connection is for the mongodb that is installed in our local machine. when you want to connect 
+to mongodb in production environment a different connection string in the production environment. It's better to
+use this configuration string from a config file.
+
+
+If you haven't created the playground database it does not matter because the first time you write
+into this database mongodb will automatically create it.
+
+Then `connect` method return a promise therefore we can.
+```
+mongoose.connect('mongodb://localhost', {useNewUrlParser: true}).then(() => {
+    console.log('connected to mongodb');
+}).catch(err => {
+    console.log('Could not connect to mongo db', err);
+});
+```
+
+##### Schema
+We use schema to define the shape of document or collection in mongodb. A collection in 
+mongodb is like a table in relational database. A document in mongodb is kind of similay to row in RDBMS.
+
+
+Schema is a part of mongoose not mongodb.  
+**Course Schema**
+```
+const courseSchema = new mongoose.Schema({
+    name: String,
+    author: String,
+    tags: [String],
+    date: {
+        type: Date,
+        default: Date.now()
+    },
+    isPublished: Boolean
+});
+```
+
+##### Models.
+We need to compile the schema into a mongodb model.
+```
+const Course = mongoose.model('Course', courseSchema); //returns a class
+const courseObj = new Course({
+    name: 'Node js Course',
+    author: 'Selvesan',
+    tags: ['node', 'backend'],
+    isPublished: true
+});
+```
+
+##### Saving to Database
+```
+courseObj.save();
+```
+This is a asynchronous task as it takes some time to save the data to the database.
+Therefore using `await` and when using the `await` keyword you can only do so inside a async function. Therefore now
+the code looks like this.
+```
+const Course = mongoose.model('Course', courseSchema);
+  
+async function createCourse(){
+    const courseObj = new Course({
+        name: 'Node js Course',
+        author: 'Selvesan',
+        tags: ['node', 'backend'],
+        isPublished: true
+    });
+    const result=await courseObj.save();
+}
+
+```
+refactoring the model and the save function into the `async function`.
+
+
+##### Retrieving Data.
+```
+
+async function getCourse() {
+    const courses = await Course.find();
+    console.log(courses);
+}
+getCourse();
+
+```
+
+**Filtering Data**
+```
+const courses = await Course.find({author: 'Selvesan', isPublished: true});
+console.log(courses);
+```
+Here the find method can take one or more key value pair for the filter.
+
+**More complex select**
+```
+    const courses = await Course.find({
+        author: 'Selvesan',
+        isPublished: true
+    }).limit(10).sort({name: 1}).select({name: 1, tags: 1}); // sort by name in asc -1 for desc
+    console.log(courses);
+```
+
+**Comparison Operators in Query**  
+Comparison operators for mongodb.
+`eq(equal)`, `ne(not equal)`,`gt(greater than)`,
+`gte(greater or equal)`,`lt(less than)`,`lte(less than or equal)`,
+`nin(not in)`
+
+_`searching courses which have price greater than 10$.`_
+```
+await Course.find({price:{
+        $gt:10 //here using the gt operator as a property with $sign.
+    }})
+```
+_`greater than 10 and less than or equal to 20`_
+```
+await Course.find({price:{
+        $gt:10, 
+        $lte:20 
+    }})
+```
+
+_`where price in 10,20 or 30`_
+```
+await Course.find({price:{
+        $in:[10,20,30]
+    }})
+```
+
+**Logical Operators in Query**  
+Logical operators in mongodb. `OR` , `AND`
+_`courses that have author selvesan or courses that are published`_
+```
+await Course.find().or([{author:'selvesan'},{isPublished:true}])
+```
+_`courses that have author selvesan and courses that are published`_
+```
+await Course.find().and([{author:'selvesan'},{isPublished:true}])
+//or you can also use
+await Course.find({author:'selvesan',isPublished:true})
+```
+
+**Regular Expression in Query**  
+_`courses whose author name starts with sel`_
+```
+await Course.find().and({author:/^sel/i}) // i for case insensitive.
+```
+
+**Counting Data**
+```
+await Course.find({
+        author: 'Selvesan',
+        isPublished: true
+    }).count()
+```
+
+**Pagination**  
+Pagination is done by `limit` and `skip`.  
+
+```
+const pageNumber = 2;
+const pageSize = 10;
+
+
+await Course.find({
+        author: 'Selvesan',
+        isPublished: true
+    }).skip((pageNumber-1) * pageSize) //formula to get the skip value for pagination.
+    .limit(pageSize)
+    .select()
+```
+
