@@ -669,3 +669,106 @@ async function removeCourse(id) {
    console.log(course);
 }
 ```
+
+
+### RelationShips
+#### Modeling Relationship.
+We have to method of modeling relationship `Normalization` and `Embeded Documents (Denormalization)`
+
+##### Normalization (Using References)
+Creating a separate collection for `author` and `course`
+```
+//author
+{
+    name:'Selvesan'
+}
+
+//course
+{
+    author_id:'id',
+    name:'Course name'
+}
+```
+_Example_
+```
+
+const Author = mongoose.model('Author', new mongoose.Schema({
+    name: String,
+    bio: String,
+    website: String
+}));
+
+const Course = mongoose.model('Course', new mongoose.Schema({
+    name: String,
+    author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Author'
+    }
+}));
+
+createCourse('Node course', '5bb716f195ca94848bffeb59');
+
+```
+
+
+##### Denormalization
+Instead of having separate collection of `authors` we can embed and `author` document inside of `course`.
+```
+//course
+{
+    author:{
+        name:'Test'
+    }
+}
+```
+
+
+##### Hybrid Approach.
+Creating a separate collection for `authors` and `course` but the `course` table will only reference some propery of `author` inside it's document.
+```
+//author
+{
+    name:'Selvesan',
+    //and 50 other properties.
+}
+
+//courses
+{
+    author:{
+        id:'reference to an author document',
+        name:'selvesan'
+    }
+}
+
+```
+
+#### Selected Related Data
+```
+    const courses = await Course.find().populate('author').select('name');
+```
+If you want to get only certain property from author document then for eg only name of the author.
+```
+    const courses = await Course.find().populate('author','name').select('name');
+    const courses = await Course.find().populate('author','name').select('name -_id'); //exclude id
+```
+Its also possible to populate multiple property lets image each `courses` have `categories` and `category` references the category document.
+```
+    const courses = await Course.find().populate('author','name').populate('category','name').select('name -_id'); //exclude id
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Setting Response header
+```
+res.header('x-auth-token',token).send({status:true});
+```
